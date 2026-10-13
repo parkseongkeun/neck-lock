@@ -6,17 +6,18 @@
 
 ## 현재 상태 (중요)
 
-코드는 Linux 서버에서 작성했고 **macOS에서 한 번도 컴파일·실행하지 않았다.**
-- `NeckLockCore`의 회전 판정 로직은 Python으로 옮겨 8개 시나리오를 검증했다 (Swift 테스트는 아직 실행 전).
-- `NeckLock` 앱 타깃(AppKit, SwiftUI, AVFoundation, Vision, CGEventTap)은 컴파일도 안 된 상태다. 빌드 에러가 나올 수 있다.
+macOS에서 컴파일·`.app` 빌드·코어 테스트(27개)까지 확인했다. **카메라 인식과 입력 차단은 실기기에서 아직 돌려보지 않았다.**
+- 개발 맥에 Xcode가 없고 Command Line Tools만 있으면 `swift test`가 `no such module 'XCTest'`로 실패한다. 이때는 XCTest 대용 모듈로 원본 테스트를 돌릴 수 있다 (레포 밖 스크래치에서). 코드 문제가 아니다.
+- CLT가 깨졌으면(`SwiftBridging` 모듈 중복 정의, `libPackageDescription` 링크 실패) `sudo rm -rf /Library/Developer/CommandLineTools && xcode-select --install`.
+- 고개 방향 점·진행 선(`ProgressRing`)의 좌우·상하 방향은 Vision 부호 규약에 따라 반대일 수 있다. 실기기에서 점이 거울처럼 어긋나면 `ProgressRing.Orientation`의 `flipHorizontal`/`flipVertical`을 뒤집는다.
+- 방치 경고(붉은 테두리, `BorderAlarm`·`StretchNag`)는 모양만 미리보기로 확인했다. 잠금 중 20초 무동작 → 켜짐 흐름은 실기기 확인 전이다.
 
 ## 먼저 할 일
 
-1. `swift test` — 코어 테스트(WorkSchedule, LockClock, RotationTracker). 실패하면 코드를 고친다.
-2. `scripts/build-app.sh` — 컴파일 에러를 모두 고친다. (Swift concurrency 관련 에러가 나기 쉽다: `@MainActor` 격리, `Task { @MainActor in }` 사용)
-3. `open build/NeckLock.app` → 카메라·손쉬운 사용 권한 허용 → 메뉴바 "지금 테스트 잠금"으로 동작 확인.
-4. 설정의 "각도 표시"를 켜고 실제로 목을 돌려보며 임계값 튜닝 (`RotationConfig`: yawRange 20°, pitchRange 12°, engage 1.0 / release 0.8).
-5. `docs/PRD.md` §10 항목 확인: Vision pitch 정확도, ⌘Tab·전체화면 앱 위 동작, 다중 모니터, 외장 웹캠.
+1. 손쉬운 사용·카메라 권한 허용 → 메뉴바 "지금 테스트 잠금"으로 동작 확인 (비상 해제 키를 먼저 확인).
+2. 점이 얼굴 방향과 맞는지, 20초 무동작 시 붉은 테두리가 뜨고 움직이면 꺼지는지 확인.
+3. 설정의 "각도 표시"를 켜고 목을 돌려보며 임계값 튜닝 (`RotationConfig`: yawRange 20°, pitchRange 12°, engage 1.0 / release 0.8).
+4. `docs/PRD.md` §10 항목 확인: Vision pitch 정확도, ⌘Tab·전체화면 앱 위 동작, 다중 모니터(붉은 테두리 포함), 외장 웹캠.
 
 ## 지켜야 할 것
 

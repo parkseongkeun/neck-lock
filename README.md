@@ -6,7 +6,7 @@
 
 - 스펙: [docs/PRD.md](docs/PRD.md)
 - 대상: macOS 13+, 본인 맥 전용
-- 상태: 코드 작성 완료, **macOS에서 아직 빌드·실행 전** (개발 환경이 Linux라서 컴파일을 못 해봤다)
+- 상태: macOS에서 컴파일·`.app` 빌드·코어 테스트 통과 확인. **카메라·입력 차단 실기기 동작은 아직 미확인** (권한 허용 후 "지금 테스트 잠금"으로 확인할 것)
 
 ## 구조
 
@@ -19,7 +19,13 @@
 
 ## 빌드와 실행 (맥에서)
 
-Xcode 또는 Command Line Tools(Swift 5.9+)가 필요하다.
+```bash
+git clone https://github.com/opensmartyouth-art/neck-lock
+cd neck-lock
+```
+
+Xcode 또는 Command Line Tools(Swift 5.9+)가 필요하다. 설치돼 있지 않으면 `xcode-select --install`.
+단, `swift test`(XCTest)는 **Xcode가 있어야** 돈다. Command Line Tools만 있으면 앱 빌드(`scripts/build-app.sh`)까지만 된다.
 
 ```bash
 swift test                 # 코어 로직 테스트
@@ -47,10 +53,13 @@ SIGN_IDENTITY="Apple Development: 이름 (TEAMID)" scripts/build-app.sh
 - 다음 잠금 시각 확인
 - **지금 테스트 잠금**: 정각을 기다리지 않고 동작 확인 (처음엔 이걸로 먼저 확인할 것)
 - 오늘 하루 끄기 / 다시 켜기
-- 설정 (업무 요일·시간, 점심, 바퀴 수, 최대 잠금 시간, 각도 표시)
+- **붉은 테두리 미리보기**: 방치 경고 모양 확인 (입력은 막지 않음)
+- 설정 (업무 요일·시간, 점심, 바퀴 수, 최대 잠금 시간, 방치 경고 on/off, 각도 표시)
 - 로그인 시 자동 실행
 
 ## 안전장치
+
+- 잠긴 뒤 20초 동안 고개를 안 돌리면 화면 테두리가 붉게 맥동한다 (클릭·입력은 막지 않음, 설정에서 끌 수 있음)
 
 - 비상 해제: **⌃⌥⌘⇧ + Esc**
 - 기본 10분이 지나면 자동 해제 (설정에서 변경)

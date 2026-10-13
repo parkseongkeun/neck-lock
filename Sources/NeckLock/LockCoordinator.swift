@@ -24,7 +24,11 @@ final class LockCoordinator {
     private let detector = HeadPoseDetector()
     private let blocker = InputBlocker()
     private let panel = LockPanelController()
+    private let alarm = BorderAlarmController()
     private var maxTimer: Timer?
+    private var nagTimer: Timer?
+    private var nag = StretchNag(startedAt: Date())
+    private var model: LockViewModel?
     private var finishHandler: ((FinishReason) -> Void)?
 
     private(set) var isLocked = false
@@ -60,6 +64,14 @@ final class LockCoordinator {
         isLocked = true
         finishHandler = onFinish
 
+        self.model = model
+        if settings.nagEnabled {
+            nag = StretchNag(startedAt: Date())
+            nagTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+                Task { @MainActor in self?.tickNag() }
+            }
+        }
+
         if settings.maxLockMinutes > 0 {
             let seconds = TimeInterval(settings.maxLockMinutes * 60)
             maxTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
@@ -69,9 +81,29 @@ final class LockCoordinator {
         return .started
     }
 
+    /// 설정 화면·메뉴에서 붉은 테두리 모양을 미리 본다. 잠금 중에는 하지 않는다.
+    func previewAlarm() {
+        guard !isLocked else { return }
+        alarm.preview()
+    }
+
+    private func tickNag() {
+        guard isLocked, let model else { return }
+        if nag.update(now: Date(), tracker: model.tracker) {
+            alarm.show()
+        } else {
+            alarm.hide()
+        }
+    }
+
     private func finish(_ reason: FinishReason) {
         guard isLocked else { return }
         isLocked = false
+
+        nagTimer?.invalidate()
+        nagTimer = nil
+        alarm.hide()
+        model = nil
 
         maxTimer?.invalidate()
         maxTimer = nil

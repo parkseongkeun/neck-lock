@@ -149,6 +149,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         test.target = self
         menu.addItem(test)
 
+        let previewNag = NSMenuItem(title: "붉은 테두리 미리보기", action: #selector(previewNagAlarm), keyEquivalent: "")
+        previewNag.target = self
+        menu.addItem(previewNag)
+
         skipItem.action = #selector(toggleSkipToday)
         skipItem.target = self
         menu.addItem(skipItem)
@@ -219,6 +223,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func testLock() {
         startLock()
+    }
+
+    @objc private func previewNagAlarm() {
+        coordinator.previewAlarm()
     }
 
     @objc private func toggleSkipToday() {

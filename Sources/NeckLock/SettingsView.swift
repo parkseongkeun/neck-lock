@@ -42,6 +42,10 @@ struct SettingsView: View {
                 Text("이 시간이 지나면 잠금이 자동으로 풀려요. 비상 해제 단축키: ⌃⌥⌘⇧ + Esc")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                Toggle("방치하면 화면 테두리가 붉게 깜빡임", isOn: $settings.nagEnabled)
+                Text("잠긴 뒤 20초 동안 고개를 안 돌리면 켜져요. 클릭·입력은 막지 않아요.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
             }
 
             Section("개발") {
@@ -49,7 +53,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 440, height: 600)
+        .frame(width: 440, height: 660)
     }
 
     private var lockSummary: String {

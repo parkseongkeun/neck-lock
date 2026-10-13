@@ -11,6 +11,7 @@ final class AppSettings: ObservableObject {
         static let laps = "laps"
         static let maxLockMinutes = "maxLockMinutes"
         static let debugOverlay = "debugOverlay"
+        static let nagEnabled = "nagEnabled"
         static let skippedDay = "skippedDay"
     }
 
@@ -32,6 +33,11 @@ final class AppSettings: ObservableObject {
     /// 이 시간이 지나면 잠금을 자동으로 푼다 (버그로 맥을 못 쓰게 되는 상황 방지). 0 = 제한 없음.
     @Published var maxLockMinutes: Int {
         didSet { defaults.set(maxLockMinutes, forKey: Key.maxLockMinutes) }
+    }
+
+    /// 잠긴 뒤 스트레칭을 안 하면 화면 테두리를 붉게 맥동시킨다.
+    @Published var nagEnabled: Bool {
+        didSet { defaults.set(nagEnabled, forKey: Key.nagEnabled) }
     }
 
     /// 잠금 창에 yaw/pitch/누적 각도를 표시 (민감도 튜닝용).
@@ -61,5 +67,6 @@ final class AppSettings: ObservableObject {
             : defaults.integer(forKey: Key.maxLockMinutes)
 
         debugOverlay = defaults.bool(forKey: Key.debugOverlay)
+        nagEnabled = defaults.object(forKey: Key.nagEnabled) == nil ? true : defaults.bool(forKey: Key.nagEnabled)
     }
 }

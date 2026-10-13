@@ -17,34 +17,64 @@
 | `Tests/NeckLockCoreTests` | 코어 로직 단위 테스트 |
 | `scripts/build-app.sh` | `.app` 번들 빌드 |
 
-## 빌드와 실행 (맥에서)
+## 다운로드와 실행 (맥에서)
+
+**1. 받기**
 
 ```bash
 git clone https://github.com/opensmartyouth-art/neck-lock
 cd neck-lock
 ```
 
-Xcode 또는 Command Line Tools(Swift 5.9+)가 필요하다. 설치돼 있지 않으면 `xcode-select --install`.
-단, `swift test`(XCTest)는 **Xcode가 있어야** 돈다. Command Line Tools만 있으면 앱 빌드(`scripts/build-app.sh`)까지만 된다.
+**2. 개발 도구 확인.** `xcode-select -p`가 경로를 출력하면 설치된 것이다. 없으면:
 
 ```bash
-swift test                 # 코어 로직 테스트
+xcode-select --install
+```
+
+**3. 빌드** (1분쯤 걸린다)
+
+```bash
 scripts/build-app.sh       # build/NeckLock.app 생성
+```
+
+**4. 실행.** 반드시 `.app`으로 연다. `swift run`으로 실행하면 카메라 권한 창이 뜨지 않고 종료된다.
+
+```bash
 open build/NeckLock.app
 ```
 
-반드시 `.app`으로 실행한다. `swift run`으로 실행하면 카메라 권한 창이 뜨지 않고 종료된다.
+**5. 권한 허용**
 
-처음 실행하면 두 가지 권한을 요청한다.
+- **손쉬운 사용**: 시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용에서 NeckLock을 켠다 (키보드·마우스 입력 차단용). 켠 뒤 앱을 다시 실행해야 적용될 수 있다.
+- **카메라**: 처음 잠글 때 뜨는 팝업에서 허용한다 (고개 방향 인식용).
 
-- **카메라**: 고개 방향 인식
-- **손쉬운 사용** (시스템 설정 > 개인정보 보호 및 보안): 키보드·마우스 입력 차단
+**6. 처음 확인하는 순서**
 
-ad-hoc 서명은 빌드할 때마다 서명이 바뀌어서 권한이 초기화될 수 있다. 계속 개발할 거면 고정된 인증서로 서명한다.
+1. 메뉴바 아이콘(명상하는 사람) > **붉은 테두리 미리보기** — 입력을 막지 않는 안전한 확인
+2. **비상 해제 키 ⌃⌥⌘⇧ + Esc를 먼저 외운다**
+3. **지금 테스트 잠금** — 고개를 돌려 카메라 원 테두리의 점과 선이 따라오는지 본다. 20초쯤 가만히 있으면 화면 테두리가 붉게 맥동한다.
+
+점이 얼굴과 반대로 움직이면 `Sources/NeckLock/ProgressRing.swift`의 `Orientation.flipHorizontal` 또는 `flipVertical`을 `true`로 바꾼다.
+
+## 테스트
 
 ```bash
-SIGN_IDENTITY="Apple Development: 이름 (TEAMID)" scripts/build-app.sh
+swift test                 # 코어 로직 테스트 (Xcode 필요)
 ```
+
+`swift test`(XCTest)는 **Xcode가 설치돼 있어야** 돈다. Command Line Tools만 있으면 `no such module 'XCTest'`로 실패하는데, 앱 빌드(`scripts/build-app.sh`)에는 영향이 없다.
+
+## 문제 해결
+
+- **`swift`가 링크 에러(`libPackageDescription`, `SwiftBridging` 중복)를 낸다**: Command Line Tools가 꼬인 것이다.
+  `sudo rm -rf /Library/Developer/CommandLineTools && xcode-select --install`
+- **빌드 후 권한이 초기화된다**: 기본 ad-hoc 서명은 빌드할 때마다 서명이 바뀐다. 고정된 인증서로 서명한다.
+
+  ```bash
+  SIGN_IDENTITY="Apple Development: 이름 (TEAMID)" scripts/build-app.sh
+  ```
+- **잠금이 안 걸리고 메뉴바에 경고만 뜬다**: 손쉬운 사용 또는 카메라 권한이 없는 것이다 (의도된 안전장치).
 
 ## 사용
 

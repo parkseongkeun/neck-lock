@@ -75,9 +75,23 @@ public struct RotationTracker: Sendable {
     public private(set) var vector: Vector2?
     /// 지금 충분히 크게 돌린 상태인지.
     public private(set) var isEngaged = false
+    /// 마지막으로 "충분히 돌린 상태"였을 때의 머리 방향 각도. 진행 선의 끝점으로 쓴다.
+    /// 머리를 중앙으로 되돌려도 유지되고, 새 바퀴를 시작하면 갱신된다.
+    public private(set) var trailAngle: Double?
     private var lastAngle: Double?
 
     private static let fullTurn = 2 * Double.pi
+
+    /// 지금 머리가 가리키는 각도 (라디안). 수학 좌표: +x 오른쪽, +y 위, 반시계 방향이 +.
+    /// 얼굴이 없으면 nil.
+    public var headAngle: Double? {
+        vector.map { atan2($0.y, $0.x) }
+    }
+
+    /// 진행 방향. +1 반시계, -1 시계, 0 아직 없음.
+    public var direction: Double {
+        accumulated > 0 ? 1 : (accumulated < 0 ? -1 : 0)
+    }
 
     public init(config: RotationConfig = RotationConfig()) {
         self.config = config
@@ -144,6 +158,7 @@ public struct RotationTracker: Sendable {
             }
         }
         lastAngle = angle
+        trailAngle = angle
     }
 
     /// (-π, π] 범위로 정규화.

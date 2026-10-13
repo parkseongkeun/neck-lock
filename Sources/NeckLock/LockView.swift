@@ -20,16 +20,16 @@ struct LockView: View {
                     .frame(width: diameter, height: diameter)
                     .clipShape(Circle())
 
-                Circle()
-                    .stroke(Color.primary.opacity(0.15), lineWidth: 10)
-                    .frame(width: diameter + 24, height: diameter + 24)
-
-                Circle()
-                    .trim(from: 0, to: model.completed ? 1 : tracker.totalProgress)
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                    .frame(width: diameter + 24, height: diameter + 24)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeOut(duration: 0.15), value: tracker.totalProgress)
+                ProgressRing(
+                    side: diameter + 24,
+                    lapProgress: tracker.lapProgress,
+                    completedLaps: tracker.completedLaps,
+                    direction: tracker.direction,
+                    trailAngle: tracker.trailAngle,
+                    headAngle: model.faceDetected ? tracker.headAngle : nil,
+                    isEngaged: tracker.isEngaged,
+                    completed: model.completed
+                )
 
                 if model.completed {
                     Image(systemName: "checkmark.circle.fill")
@@ -64,10 +64,6 @@ struct LockView: View {
         .padding(24)
         .frame(width: 360, height: 540)
         .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(.regularMaterial))
-    }
-
-    private var ringColor: Color {
-        model.completed ? .green : (tracker.isEngaged ? .accentColor : .accentColor.opacity(0.7))
     }
 
     private var shownLaps: Int {

@@ -102,4 +102,36 @@ final class RotationTrackerTests: XCTestCase {
         XCTAssertEqual(RotationTracker.wrap(-3 * .pi), .pi, accuracy: 1e-9)
         XCTAssertEqual(RotationTracker.wrap(0.5), 0.5, accuracy: 1e-9)
     }
+
+    func testHeadAngleFollowsPose() {
+        var tracker = RotationTracker()
+        XCTAssertNil(tracker.headAngle)
+        let c = tracker.config
+        tracker.update(with: HeadPose(yaw: 0, pitch: c.pitchRange))   // 위
+        XCTAssertEqual(tracker.headAngle ?? 0, .pi / 2, accuracy: 1e-9)
+        tracker.update(with: nil)
+        XCTAssertNil(tracker.headAngle)
+    }
+
+    func testDirectionAndTrailAngle() {
+        var tracker = RotationTracker(config: RotationConfig(lapsRequired: 2))
+        XCTAssertEqual(tracker.direction, 0)
+        XCTAssertNil(tracker.trailAngle)
+        sweep(&tracker, fromDegrees: 0, toDegrees: 200, direction: 1)
+        XCTAssertEqual(tracker.direction, 1)
+        var reverse = RotationTracker(config: RotationConfig(lapsRequired: 2))
+        sweep(&reverse, fromDegrees: 0, toDegrees: 200, direction: -1)
+        XCTAssertEqual(reverse.direction, -1)
+    }
+
+    func testTrailAngleIsKeptWhenHeadReturnsToCenter() {
+        var tracker = RotationTracker()
+        sweep(&tracker, fromDegrees: 0, toDegrees: 90)
+        XCTAssertTrue(tracker.trailAngle != nil)
+        for _ in 0..<3 { tracker.update(with: HeadPose(yaw: 0, pitch: 0)) }   // 평활화 때문에 몇 프레임 필요
+        XCTAssertFalse(tracker.isEngaged)
+        let afterRelease = tracker.trailAngle
+        for _ in 0..<10 { tracker.update(with: HeadPose(yaw: 0, pitch: 0)) }
+        XCTAssertEqual(tracker.trailAngle ?? 99, afterRelease ?? -99, accuracy: 1e-9)
+    }
 }

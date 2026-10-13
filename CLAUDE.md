@@ -12,11 +12,16 @@ macOS에서 컴파일·`.app` 빌드·코어 테스트(31개)를 확인했고, *
 - 개발 맥에 Xcode가 없고 Command Line Tools만 있으면 `swift test`가 `no such module 'XCTest'`로 실패한다. 이때는 XCTest 대용 모듈로 원본 테스트를 돌릴 수 있다 (레포 밖 스크래치에서). 코드 문제가 아니다.
 - CLT가 깨졌으면(`SwiftBridging` 모듈 중복 정의, `libPackageDescription` 링크 실패) `sudo rm -rf /Library/Developer/CommandLineTools && xcode-select --install`.
 
-### 권한이 반복해서 묻는 문제 (ad-hoc 서명)
-이 맥에는 코드 서명 인증서가 없어 ad-hoc 서명이다. 빌드가 바뀌면 맥이 다른 앱으로 보고, 설정에 스위치가 켜져 있어도 "손쉬운 사용 접근 권한" 팝업이 반복된다. 해결:
-1. 앱 종료 후 `tccutil reset Accessibility com.opensmartyouth.necklock`
-2. 앱 실행 → "지금 테스트 잠금" → 설정에서 스위치를 한 번만 켬 → 앱을 종료했다 다시 실행.
-근본 해결은 고정된 자체 서명 인증서 + `SIGN_IDENTITY` (키체인 변경이라 사용자 승인 필요).
+### 권한이 반복해서 묻는 문제 (해결됨: 고정 인증서)
+ad-hoc 서명은 빌드마다 서명이 달라져서 설정에 스위치가 켜져 있어도 "손쉬운 사용 접근 권한" 팝업이 반복됐다. 개발 맥에 자체 서명 인증서 `NeckLock Dev`(로그인 키체인)를 만들어 해결했다. **항상 이 인증서로 빌드한다:**
+
+```bash
+SIGN_IDENTITY="NeckLock Dev" scripts/build-app.sh
+```
+
+- 지정 요구사항이 `certificate leaf = H"b32f390d..."`로 고정돼 빌드가 바뀌어도 권한이 유지된다 (연속 두 번 빌드로 확인).
+- `security find-identity`에서 `CSSMERR_TP_NOT_TRUSTED`로 나와도 서명에는 문제없다.
+- 인증서가 없는 맥에서는 README "문제 해결"의 절차로 만든다. 권한을 한 번 새로 받으려면 `tccutil reset Accessibility com.opensmartyouth.necklock` 후 앱 실행 → 허용 → 앱 재실행.
 
 ## 먼저 할 일
 
@@ -29,7 +34,7 @@ macOS에서 컴파일·`.app` 빌드·코어 테스트(31개)를 확인했고, *
 
 - **안전장치를 약화하지 말 것.** 입력을 막는 앱이라 버그가 나면 맥을 못 쓰게 된다. 비상 해제(⌃⌥⌘⇧+Esc), 최대 잠금 시간(기본 10분), fail-open(권한·카메라 없으면 잠그지 않음)은 유지한다. 잠금 동작을 테스트할 때는 항상 비상 해제 방법을 먼저 확인한다.
 - `swift run`으로 실행하지 말 것. 카메라 권한 문구(Info.plist)가 없어서 종료된다. 항상 `.app`으로 실행.
-- ad-hoc 서명은 빌드마다 권한이 초기화될 수 있다. 계속 개발하려면 `SIGN_IDENTITY`로 고정 인증서를 쓴다.
+- 빌드는 항상 `SIGN_IDENTITY="NeckLock Dev"`로 한다 (ad-hoc이면 권한이 초기화된다).
 
 ## 구조
 

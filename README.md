@@ -35,8 +35,10 @@ xcode-select --install
 **3. 빌드** (1분쯤 걸린다)
 
 ```bash
-scripts/build-app.sh       # build/NeckLock.app 생성
+scripts/build-app.sh       # build/NeckLock.app 생성 (ad-hoc 서명)
 ```
+
+계속 개발할 거면 권한이 안 풀리도록 고정 인증서로 빌드한다 (아래 "문제 해결" 참고).
 
 **4. 실행.** 반드시 `.app`으로 연다. `swift run`으로 실행하면 카메라 권한 창이 뜨지 않고 종료된다.
 
@@ -69,11 +71,17 @@ swift test                 # 코어 로직 테스트 (Xcode 필요)
 
 - **`swift`가 링크 에러(`libPackageDescription`, `SwiftBridging` 중복)를 낸다**: Command Line Tools가 꼬인 것이다.
   `sudo rm -rf /Library/Developer/CommandLineTools && xcode-select --install`
-- **빌드 후 권한이 초기화된다**: 기본 ad-hoc 서명은 빌드할 때마다 서명이 바뀐다. 고정된 인증서로 서명한다.
+- **빌드할 때마다 권한을 다시 묻는다**: 기본 ad-hoc 서명은 빌드마다 서명이 달라져서 맥이 다른 앱으로 본다. 고정된 자체 서명 인증서를 한 번 만들어 두면 해결된다.
+  1. 키체인 접근을 연다 (최신 맥에서 `open -a "Keychain Access"`는 "암호" 앱이 열리므로, 경로로 연다: `open "/System/Library/CoreServices/Applications/Keychain Access.app"`).
+  2. 왼쪽에서 **로그인** 선택 → 메뉴바 **키체인 접근 → 인증서 지원 → 인증서 생성…**
+  3. 이름 `NeckLock Dev`, 신원 유형 **자체 서명 루트**, 인증서 유형 **코드 서명**으로 생성.
+  4. 이 인증서로 빌드한다. (`CSSMERR_TP_NOT_TRUSTED`로 보여도 서명과 권한 유지에는 문제없다.)
 
   ```bash
-  SIGN_IDENTITY="Apple Development: 이름 (TEAMID)" scripts/build-app.sh
+  SIGN_IDENTITY="NeckLock Dev" scripts/build-app.sh
   ```
+
+  처음 한 번만 손쉬운 사용 권한을 다시 켜면 된다 (`tccutil reset Accessibility com.opensmartyouth.necklock` 후 앱 실행 → 허용 → 앱 재실행). 이후 빌드에서는 유지된다.
 - **잠금이 안 걸리고 메뉴바에 경고만 뜬다**: 손쉬운 사용 또는 카메라 권한이 없는 것이다 (의도된 안전장치).
 
 ## 사용

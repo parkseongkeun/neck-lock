@@ -14,6 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var timer: Timer?
     private var cancellables = Set<AnyCancellable>()
     private var screenLocked = false
+    /// 맥 화면이 잠겨 있어서 건너뛴 정각. 풀린 직후 같은 시간대면 보충한다.
+    private var skippedWhileScreenLocked: Date?
     private var statusIssue: String?
 
     private var statusItem: NSStatusItem!
@@ -52,7 +54,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in self?.screenLocked = true }
         }
         distributed.addObserver(forName: Notification.Name("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.screenLocked = false }
+            Task { @MainActor in
+                self?.screenLocked = false
+                self?.makeUpSkippedLock()
+            }
         }
         NotificationCenter.default.addObserver(forName: .NSSystemClockDidChange, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in
@@ -88,8 +93,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func handleFire(now: Date) {
         guard !DaySkip.isSkipped(settings.skippedDay, on: now) else { return }
-        guard !screenLocked, !coordinator.isLocked else { return }
+        if screenLocked {
+            skippedWhileScreenLocked = now
+            return
+        }
+        guard !coordinator.isLocked else { return }
         startLock()
+    }
+
+    /// 화면 잠금이 풀린 직후, 그동안 건너뛴 정각이 같은 시간대 안이면 잠금을 건다.
+    private func makeUpSkippedLock() {
+        guard let skipped = skippedWhileScreenLocked else { return }
+        skippedWhileScreenLocked = nil
+        guard LockMakeup.isDue(skippedAt: skipped, now: Date()) else { return }
+        Task { @MainActor in
+            // 잠금 해제 애니메이션이 끝난 뒤에 건다.
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            guard !screenLocked, !coordinator.isLocked,
+                  !DaySkip.isSkipped(settings.skippedDay, on: Date()) else { return }
+            startLock()
+        }
     }
 
     private func startLock() {

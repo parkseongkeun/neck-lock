@@ -35,6 +35,7 @@ final class LockCoordinator {
     private var model: LockViewModel?
     private var settings: AppSettings?
     private var finishHandler: ((FinishReason) -> Void)?
+    private var startedAt: Date?
 
     private(set) var isLocked = false
 
@@ -69,13 +70,16 @@ final class LockCoordinator {
         detector.start()
 
         isLocked = true
+        startedAt = Date()
         finishHandler = onFinish
         self.model = model
         self.settings = settings
 
         if settings.dimEnabled { dim.show() }
 
-        Self.log.info("잠금 시작 — 방치 경고 \(settings.nagEnabled ? "켬" : "끔"), 화면 어둡게 \(settings.dimEnabled ? "켬" : "끔"), 카메라 \(self.detector.currentDevice?.localizedName ?? "?")")
+        let cameraName = detector.currentDevice?.localizedName ?? "?"
+        let cameraCount = HeadPoseDetector.availableCameras().count
+        Self.log.info("잠금 시작 — 방치 경고 \(settings.nagEnabled ? "켬" : "끔", privacy: .public), 화면 어둡게 \(settings.dimEnabled ? "켬" : "끔", privacy: .public), 바퀴 \(settings.laps), 카메라 \(cameraName, privacy: .public) (선택 가능 \(cameraCount)개)")
 
         if settings.nagEnabled {
             nag = StretchNag(startedAt: Date())
@@ -121,7 +125,7 @@ final class LockCoordinator {
             model.nagRemaining = Int(nag.secondsUntilNag(now: now).rounded(.up))
         }
         if wasShowing != alarm.isShowing {
-            Self.log.info("방치 경고 \(self.alarm.isShowing ? "켜짐" : "꺼짐")")
+            Self.log.info("방치 경고 \(self.alarm.isShowing ? "켜짐" : "꺼짐", privacy: .public)")
         }
     }
 
@@ -142,7 +146,7 @@ final class LockCoordinator {
         let next = cameras[(index + 1) % cameras.count]
         if detector.switchCamera(to: next.uniqueID) {
             settings.cameraID = next.uniqueID
-            Self.log.info("카메라 전환 → \(next.localizedName)")
+            Self.log.info("카메라 전환 → \(next.localizedName, privacy: .public)")
         }
         refreshCameraInfo(on: model)
     }
@@ -150,7 +154,7 @@ final class LockCoordinator {
     private func finish(_ reason: FinishReason) {
         guard isLocked else { return }
         isLocked = false
-        Self.log.info("잠금 종료 — \(String(describing: reason))")
+        Self.log.info("잠금 종료 — \(String(describing: reason), privacy: .public) (경과 \(Int(Date().timeIntervalSince(self.startedAt ?? Date())))초)")
 
         nagTimer?.invalidate()
         nagTimer = nil

@@ -71,7 +71,7 @@ struct LockView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(24)
-        .frame(width: 360, height: 580)
+        .frame(width: 360, height: 640)
         .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(.regularMaterial))
     }
 

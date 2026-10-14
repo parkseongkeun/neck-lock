@@ -5,6 +5,7 @@ import Combine
 import ServiceManagement
 import UserNotifications
 import NeckLockCore
+import os
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -236,6 +237,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         submenu.addItem(.separator())
 
         let cameras = HeadPoseDetector.availableCameras()
+        Logger(subsystem: "com.opensmartyouth.necklock", category: "camera")
+            .info("카메라 목록: \(cameras.map { "\($0.localizedName) [\($0.deviceType.rawValue)]" }.joined(separator: ", "), privacy: .public) / 저장된 선택: \(self.settings.cameraID ?? "자동", privacy: .public)")
         for camera in cameras {
             let item = NSMenuItem(title: camera.localizedName, action: #selector(selectCamera(_:)), keyEquivalent: "")
             item.target = self

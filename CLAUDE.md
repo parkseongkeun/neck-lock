@@ -27,9 +27,9 @@ SIGN_IDENTITY="NeckLock Dev" scripts/build-app.sh
 2026-10-14 사용자가 "붉은 테두리가 안 뜬다"고 재보고했다. 원인 후보: 잠금 쪽 타이머가 메뉴 조작 중 default 모드에서만 돌 수 있음 → common 모드로 변경, 상태 전환을 `os.Logger`로 남김, "각도 표시"를 켜면 `경고까지 N초`가 보이게 함. 아직 실기기 재확인 전이다. 확인할 때:
 
 ```bash
-log show --last 10m --predicate 'subsystem == "com.opensmartyouth.necklock"' --style compact
+/usr/bin/log show --last 10m --info --predicate 'subsystem == "com.opensmartyouth.necklock"' --style compact
 ```
-`방치 경고 켜짐` 로그가 있는데 화면에 안 보이면 창 문제, 로그가 없으면 판정/타이머 문제다.
+**주의: zsh의 `log`는 내장 명령이라 반드시 `/usr/bin/log`로 쓴다.** `방치 경고 켜짐` 로그가 있는데 화면에 안 보이면 창 문제, 로그가 없으면 판정/타이머 문제다.
 
 ## 먼저 할 일
 

@@ -36,6 +36,7 @@ final class LockCoordinator {
     private var settings: AppSettings?
     private var finishHandler: ((FinishReason) -> Void)?
     private var startedAt: Date?
+    private var tickCount = 0
 
     private(set) var isLocked = false
 
@@ -71,6 +72,7 @@ final class LockCoordinator {
 
         isLocked = true
         startedAt = Date()
+        tickCount = 0
         finishHandler = onFinish
         self.model = model
         self.settings = settings
@@ -123,6 +125,11 @@ final class LockCoordinator {
         } else {
             alarm.hide()
             model.nagRemaining = Int(nag.secondsUntilNag(now: now).rounded(.up))
+        }
+        tickCount += 1
+        if tickCount % 10 == 0 {   // 0.5초 × 10 = 5초마다 상태를 남긴다
+            let deg = Int((model.tracker.accumulated * 180 / .pi).rounded())
+            Self.log.info("상태 — 경고까지 \(model.nagRemaining ?? -1)초, 누적 \(deg)°, 얼굴 \(model.faceDetected ? "있음" : "없음", privacy: .public), 경고창 \(self.alarm.isShowing ? "표시" : "없음", privacy: .public)")
         }
         if wasShowing != alarm.isShowing {
             Self.log.info("방치 경고 \(self.alarm.isShowing ? "켜짐" : "꺼짐", privacy: .public)")

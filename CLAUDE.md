@@ -23,8 +23,13 @@ SIGN_IDENTITY="NeckLock Dev" scripts/build-app.sh
 - `security find-identity`에서 `CSSMERR_TP_NOT_TRUSTED`로 나와도 서명에는 문제없다.
 - 인증서가 없는 맥에서는 README "문제 해결"의 절차로 만든다. 권한을 한 번 새로 받으려면 `tccutil reset Accessibility com.opensmartyouth.necklock` 후 앱 실행 → 허용 → 앱 재실행.
 
+### 카메라 제약 (조사 결과)
+- 아이폰 연속성 카메라는 맥에서 **카메라 1개**(`iPhone13,3`, position 미지정)로만 보이고 전면/후면 선택 API가 없다. 후면 기준. 전면 선택 기능은 만들 수 없다.
+- 안드로이드는 연속성 카메라 불가 → 맥 내장 카메라가 기본 경로. 폰 카메라는 서드파티 웹캠 앱(Iriun 등)이 외장 카메라로 노출되길 기대하는 수준이며 미검증. 더 확실한 대안은 폰 브라우저(WebRTC, `facingMode`로 전/후면 선택)로 영상을 받는 방식인데, 폰이 HTTPS를 요구해 인증서 안내가 필요한 큰 작업이다.
+- 개발용 실행 옵션 `--test-lock`, 로그는 `/usr/bin/log` (zsh 내장 `log`는 안 된다).
+
 ### 방치 경고(붉은 테두리) 디버깅
-2026-10-14 사용자가 "붉은 테두리가 안 뜬다"고 재보고했다. 원인 후보: 잠금 쪽 타이머가 메뉴 조작 중 default 모드에서만 돌 수 있음 → common 모드로 변경, 상태 전환을 `os.Logger`로 남김, "각도 표시"를 켜면 `경고까지 N초`가 보이게 함. 아직 실기기 재확인 전이다. 확인할 때:
+2026-10-14 사용자가 "붉은 테두리가 안 뜬다"고 재보고했다. 11:03 테스트(1바퀴, 53초 만에 완료)에서도 `방치 경고 켜짐` 로그가 없었다 (처음 20초 안에 고개를 돌렸는지는 확인 전). 5초마다 `상태 — 경고까지 N초, 누적 X°, 얼굴, 경고창` 진단 로그를 남기도록 했다. 원인 후보: 잠금 쪽 타이머가 메뉴 조작 중 default 모드에서만 돌 수 있음 → common 모드로 변경, 상태 전환을 `os.Logger`로 남김, "각도 표시"를 켜면 `경고까지 N초`가 보이게 함. 아직 실기기 재확인 전이다. 확인할 때:
 
 ```bash
 /usr/bin/log show --last 10m --info --predicate 'subsystem == "com.opensmartyouth.necklock"' --style compact

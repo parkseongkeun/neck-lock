@@ -77,6 +77,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         self.timer = timer
 
         refreshMenu()
+
+        // 개발용: `open NeckLock.app --args --test-lock` 으로 시작하면 2초 뒤 테스트 잠금을 건다.
+        if CommandLine.arguments.contains("--test-lock") {
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                self?.startLock()
+            }
+        }
     }
 
     // MARK: - 스케줄

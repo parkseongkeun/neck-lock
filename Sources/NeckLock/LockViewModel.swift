@@ -7,12 +7,17 @@ final class LockViewModel: ObservableObject {
     @Published private(set) var faceDetected = false
     @Published private(set) var lastPose: HeadPose?
     @Published private(set) var completed = false
+    /// 경고(붉은 테두리)까지 남은 초. 경고 중이면 0, 경고를 안 쓰면 nil. (각도 표시용)
+    @Published var nagRemaining: Int?
+    @Published var cameraName = ""
+    @Published var cameraCount = 1
 
     let lapsRequired: Int
     let debug: Bool
 
     var onSkipToday: (() -> Void)?
     var onComplete: (() -> Void)?
+    var onSwitchCamera: (() -> Void)?
 
     init(config: RotationConfig, debug: Bool) {
         tracker = RotationTracker(config: config)

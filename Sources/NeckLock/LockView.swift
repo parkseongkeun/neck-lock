@@ -56,13 +56,22 @@ struct LockView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if model.cameraCount > 1 {
+                Button { model.onSwitchCamera?() } label: {
+                    Label("카메라 전환 · \(model.cameraName)", systemImage: "camera.rotate")
+                }
+                .buttonStyle(.plain)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
             Button("오늘 하루 끄기") { model.onSkipToday?() }
                 .buttonStyle(.plain)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .padding(24)
-        .frame(width: 360, height: 540)
+        .frame(width: 360, height: 580)
         .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(.regularMaterial))
     }
 
@@ -84,7 +93,8 @@ struct LockView: View {
         let pitch = (model.lastPose?.pitch ?? 0) * deg
         let acc = tracker.accumulated * deg
         let state = tracker.isEngaged ? "ON" : "off"
-        return String(format: "yaw %+.0f°  pitch %+.0f°  누적 %+.0f°  ", yaw, pitch, acc) + state
+        let nag = model.nagRemaining.map { $0 == 0 ? "  경고 중" : "  경고까지 \($0)초" } ?? ""
+        return String(format: "yaw %+.0f°  pitch %+.0f°  누적 %+.0f°  ", yaw, pitch, acc) + state + nag
     }
 }
 

@@ -32,26 +32,63 @@ final class HeadPoseDetector: NSObject, AVCaptureVideoDataOutputSampleBufferDele
         AVCaptureDevice.authorizationStatus(for: .video) == .authorized
     }
 
-    /// 세션을 구성한다. 카메라가 없거나 열 수 없으면 false.
-    func configure() -> Bool {
-        if configured { return true }
-        guard let device = AVCaptureDevice.default(for: .video),
-              let input = try? AVCaptureDeviceInput(device: device) else {
-            return false
+    /// 지금 세션에 연결된 카메라.
+    private(set) var currentDevice: AVCaptureDevice?
+
+    /// 선택 가능한 카메라 (내장, 외장 웹캠, 아이폰 연속성 카메라).
+    static func availableCameras() -> [AVCaptureDevice] {
+        var types: [AVCaptureDevice.DeviceType] = [.builtInWideAngleCamera]
+        if #available(macOS 14.0, *) {
+            types += [.external, .continuityCamera]
+        } else {
+            types.append(.externalUnknown)
         }
+        return AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: .unspecified).devices
+    }
+
+    /// 고른 카메라(없으면 시스템 기본)를 연다. 고른 카메라가 없으면 기본으로 대체한다.
+    private static func resolve(_ preferredID: String?) -> AVCaptureDevice? {
+        if let preferredID, let device = AVCaptureDevice(uniqueID: preferredID) { return device }
+        return AVCaptureDevice.default(for: .video)
+    }
+
+    /// 세션을 구성한다. 카메라가 없거나 열 수 없으면 false.
+    func configure(preferredID: String? = nil) -> Bool {
+        guard let device = Self.resolve(preferredID) else { return false }
+        if configured, currentDevice?.uniqueID == device.uniqueID { return true }
+        return install(device)
+    }
+
+    /// 잠금 중에 다른 카메라로 바꾼다. 실패하면 원래 카메라를 유지하고 false.
+    func switchCamera(to id: String) -> Bool {
+        guard let device = AVCaptureDevice(uniqueID: id) else { return false }
+        if currentDevice?.uniqueID == device.uniqueID { return true }
+        return install(device)
+    }
+
+    private func install(_ device: AVCaptureDevice) -> Bool {
+        guard let input = try? AVCaptureDeviceInput(device: device) else { return false }
 
         session.beginConfiguration()
         defer { session.commitConfiguration() }
 
-        session.sessionPreset = .vga640x480
-        guard session.canAddInput(input) else { return false }
+        let previous = session.inputs
+        previous.forEach { session.removeInput($0) }
+        guard session.canAddInput(input) else {
+            previous.forEach { session.addInput($0) }   // 실패하면 원래대로
+            return false
+        }
         session.addInput(input)
+        if session.canSetSessionPreset(.vga640x480) { session.sessionPreset = .vga640x480 }
 
-        output.alwaysDiscardsLateVideoFrames = true
-        output.setSampleBufferDelegate(self, queue: queue)
-        guard session.canAddOutput(output) else { return false }
-        session.addOutput(output)
+        if session.outputs.isEmpty {
+            output.alwaysDiscardsLateVideoFrames = true
+            output.setSampleBufferDelegate(self, queue: queue)
+            guard session.canAddOutput(output) else { return false }
+            session.addOutput(output)
+        }
 
+        currentDevice = device
         configured = true
         return true
     }

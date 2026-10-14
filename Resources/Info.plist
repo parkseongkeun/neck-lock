@@ -22,6 +22,8 @@
     <string>13.0</string>
     <key>LSUIElement</key>
     <true/>
+    <key>NSCameraUseContinuityCameraDeviceType</key>
+    <true/>
     <key>NSCameraUsageDescription</key>
     <string>목 스트레칭 동작(고개 돌리기)을 확인하기 위해 카메라를 사용합니다. 영상은 저장하거나 전송하지 않습니다.</string>
     <key>NSPrincipalClass</key>

@@ -53,4 +53,12 @@ final class StretchNagTests: XCTestCase {
         XCTAssertTrue(tracker.isComplete)
         XCTAssertFalse(nag.update(now: start.addingTimeInterval(500), tracker: tracker))
     }
+
+    func testSecondsUntilNagCountsDown() {
+        var nag = StretchNag(startedAt: start, graceSeconds: 20)
+        let tracker = RotationTracker()
+        nag.update(now: start.addingTimeInterval(5), tracker: tracker)
+        XCTAssertEqual(nag.secondsUntilNag(now: start.addingTimeInterval(5)), 15, accuracy: 1e-9)
+        XCTAssertEqual(nag.secondsUntilNag(now: start.addingTimeInterval(25)), 0, accuracy: 1e-9)
+    }
 }

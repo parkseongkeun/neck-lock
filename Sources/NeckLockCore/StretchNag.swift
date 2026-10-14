@@ -20,6 +20,11 @@ public struct StretchNag: Sendable {
         self.minProgress = minProgress
     }
 
+    /// 경고가 시작되기까지 남은 초. 이미 경고 중이면 0.
+    public func secondsUntilNag(now: Date) -> TimeInterval {
+        max(0, graceSeconds - now.timeIntervalSince(lastActivity))
+    }
+
     /// 주기적으로 호출. 경고를 켜야 하면 true.
     @discardableResult
     public mutating func update(now: Date, tracker: RotationTracker) -> Bool {

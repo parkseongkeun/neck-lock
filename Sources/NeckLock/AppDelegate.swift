@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 import SwiftUI
 import Combine
 import ServiceManagement
@@ -23,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var issueItem = NSMenuItem()
     private var skipItem = NSMenuItem()
     private var loginItem = NSMenuItem()
+    private let cameraItem = NSMenuItem(title: "카메라", action: nil, keyEquivalent: "")
     private var settingsWindow: NSWindow?
 
     // MARK: - 시작
@@ -172,6 +174,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         test.target = self
         menu.addItem(test)
 
+        cameraItem.submenu = NSMenu()
+        menu.addItem(cameraItem)
+
         let previewNag = NSMenuItem(title: "붉은 테두리 미리보기", action: #selector(previewNagAlarm), keyEquivalent: "")
         previewNag.target = self
         menu.addItem(previewNag)
@@ -215,6 +220,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             : "오늘 하루 끄기"
 
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
+
+        rebuildCameraMenu()
+    }
+
+    /// 카메라 목록을 다시 만든다. 아이폰 같은 카메라는 연결 상태가 수시로 바뀐다.
+    private func rebuildCameraMenu() {
+        guard let submenu = cameraItem.submenu else { return }
+        submenu.removeAllItems()
+
+        let auto = NSMenuItem(title: "자동 (시스템 기본)", action: #selector(selectCamera(_:)), keyEquivalent: "")
+        auto.target = self
+        auto.state = settings.cameraID == nil ? .on : .off
+        submenu.addItem(auto)
+        submenu.addItem(.separator())
+
+        let cameras = HeadPoseDetector.availableCameras()
+        for camera in cameras {
+            let item = NSMenuItem(title: camera.localizedName, action: #selector(selectCamera(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = camera.uniqueID
+            item.state = settings.cameraID == camera.uniqueID ? .on : .off
+            submenu.addItem(item)
+        }
+
+        // 저장된 카메라가 지금 연결돼 있지 않으면 알려준다 (잠글 때는 기본 카메라로 대체된다).
+        if let saved = settings.cameraID, !cameras.contains(where: { $0.uniqueID == saved }) {
+            let missing = NSMenuItem(title: "선택한 카메라 연결 안 됨 (기본으로 대체)", action: nil, keyEquivalent: "")
+            missing.isEnabled = false
+            submenu.addItem(missing)
+        }
+    }
+
+    @objc private func selectCamera(_ sender: NSMenuItem) {
+        settings.cameraID = sender.representedObject as? String
+        refreshMenu()
     }
 
     /// "오늘 하루 끄기" 상태까지 반영한 다음 잠금 시각.

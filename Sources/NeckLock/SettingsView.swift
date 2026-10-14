@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 import NeckLockCore
 
 struct SettingsView: View {
@@ -42,6 +43,13 @@ struct SettingsView: View {
                 Text("이 시간이 지나면 잠금이 자동으로 풀려요. 비상 해제 단축키: ⌃⌥⌘⇧ + Esc")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                Toggle("잠금 중 화면 어둡게", isOn: $settings.dimEnabled)
+                Picker("카메라", selection: $settings.cameraID) {
+                    Text("자동 (시스템 기본)").tag(String?.none)
+                    ForEach(cameras, id: \.uniqueID) { camera in
+                        Text(camera.localizedName).tag(Optional(camera.uniqueID))
+                    }
+                }
                 Toggle("방치하면 화면 테두리가 붉게 깜빡임", isOn: $settings.nagEnabled)
                 Text("잠긴 뒤 20초 동안 고개를 안 돌리면 켜져요. 클릭·입력은 막지 않아요.")
                     .font(.callout)
@@ -53,8 +61,10 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 440, height: 660)
+        .frame(width: 440, height: 740)
     }
+
+    private var cameras: [AVCaptureDevice] { HeadPoseDetector.availableCameras() }
 
     private var lockSummary: String {
         let hours = settings.schedule.lockHours

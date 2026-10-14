@@ -16,7 +16,7 @@ private final class FirstMouseHostingView<Content: View>: NSHostingView<Content>
 @MainActor
 final class LockPanelController {
     private var panel: NSPanel?
-    private let size = NSSize(width: 360, height: 540)
+    private let size = NSSize(width: 360, height: 580)
 
     /// 창을 띄우고, 창이 차지하는 영역을 전역 좌표(좌상단 원점)로 돌려준다.
     func show(model: LockViewModel, session: AVCaptureSession) -> CGRect {

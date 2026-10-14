@@ -12,6 +12,8 @@ final class AppSettings: ObservableObject {
         static let maxLockMinutes = "maxLockMinutes"
         static let debugOverlay = "debugOverlay"
         static let nagEnabled = "nagEnabled"
+        static let dimEnabled = "dimEnabled"
+        static let cameraID = "cameraID"
         static let skippedDay = "skippedDay"
     }
 
@@ -38,6 +40,16 @@ final class AppSettings: ObservableObject {
     /// 잠긴 뒤 스트레칭을 안 하면 화면 테두리를 붉게 맥동시킨다.
     @Published var nagEnabled: Bool {
         didSet { defaults.set(nagEnabled, forKey: Key.nagEnabled) }
+    }
+
+    /// 잠금 중 모든 모니터를 반투명하게 어둡게 한다.
+    @Published var dimEnabled: Bool {
+        didSet { defaults.set(dimEnabled, forKey: Key.dimEnabled) }
+    }
+
+    /// 사용할 카메라의 uniqueID. nil이면 시스템 기본 카메라.
+    @Published var cameraID: String? {
+        didSet { defaults.set(cameraID, forKey: Key.cameraID) }
     }
 
     /// 잠금 창에 yaw/pitch/누적 각도를 표시 (민감도 튜닝용).
@@ -68,5 +80,7 @@ final class AppSettings: ObservableObject {
 
         debugOverlay = defaults.bool(forKey: Key.debugOverlay)
         nagEnabled = defaults.object(forKey: Key.nagEnabled) == nil ? true : defaults.bool(forKey: Key.nagEnabled)
+        dimEnabled = defaults.object(forKey: Key.dimEnabled) == nil ? true : defaults.bool(forKey: Key.dimEnabled)
+        cameraID = defaults.string(forKey: Key.cameraID)
     }
 }
